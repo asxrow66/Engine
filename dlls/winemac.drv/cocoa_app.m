@@ -92,7 +92,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
 @property (retain, nonatomic) NSTimer* cursorTimer;
 @property (retain, nonatomic) NSCursor* cursor;
 @property (retain, nonatomic) NSImage* applicationIcon;
-@property (copy, nonatomic) NSString* applicationName;
+@property (copy, nonatomic) NSString* applicationName; /* Whisky hack #9 */
 @property (readonly, nonatomic) BOOL inputSourceIsInputMethod;
 @property (retain, nonatomic) WineWindow* mouseCaptureWindow;
 
@@ -109,7 +109,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
     @synthesize keyboardType, lastFlagsChanged;
     @synthesize displaysTemporarilyUncapturedForDialog, temporarilyIgnoreResignEventsForDialog;
     @synthesize applicationIcon;
-    @synthesize applicationName;
+    @synthesize applicationName; /* Whisky hack #9 */
     @synthesize cursorFrames, cursorTimer, cursor;
     @synthesize mouseCaptureWindow;
     @synthesize lastSetCursorPositionTime;
@@ -203,7 +203,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
         [cursor release];
         [screenFrameCGRects release];
         [applicationIcon release];
-        [applicationName release];
+        [applicationName release]; /* Whisky hack #9 */
         [clipCursorHandler release];
         [cursorTimer release];
         [cursorFrames release];
@@ -388,6 +388,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
 
             [NSApp setApplicationIconImage:self.applicationIcon];
 
+            /* Whisky hack #9 */
             // Set application name
             NSString* appName = [NSString stringWithFormat:@"WhiskyWine (%@)", self.applicationName];
             bool success = [self setProcessName:appName];
@@ -843,6 +844,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
         macdrv_release_event(event);
     }
 
+    /* Whisky hack #9 */
     - (BOOL) setProcessName:(NSString*)name
     {
         // Convert the name to a CFString
@@ -1289,6 +1291,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
         self.applicationIcon = nsimage;
     }
 
+    /* Whisky hack #9 */
     - (void) setApplicationName:(NSString*)name
     {
         [applicationName release];
@@ -2753,6 +2756,7 @@ void macdrv_set_application_icon(CFArrayRef images, CFURLRef urlRef)
     });
 }
 
+/* Whisky hack #9 */
 /***********************************************************************
  *              macdrv_set_application_name
  *

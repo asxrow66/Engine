@@ -128,7 +128,7 @@ enum {
 
     NSImage* applicationIcon;
 
-    NSString* applicationName;
+    NSString* applicationName; /* Whisky hack #9 */
     
     BOOL beenActive;
 

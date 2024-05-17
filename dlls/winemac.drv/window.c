@@ -1355,6 +1355,7 @@ static void set_app_icon(void)
     }
 }
 
+/* Whisky hack #9 */
 /***********************************************************************
  *              set_app_name
  */
@@ -1688,6 +1689,7 @@ BOOL macdrv_CreateDesktopWindow(HWND hwnd)
     }
 
     set_app_icon();
+    /* Whisky hack #9 */
     set_app_name();
     return TRUE;
 }
