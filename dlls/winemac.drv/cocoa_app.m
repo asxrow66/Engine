@@ -92,6 +92,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
 @property (retain, nonatomic) NSTimer* cursorTimer;
 @property (retain, nonatomic) NSCursor* cursor;
 @property (retain, nonatomic) NSImage* applicationIcon;
+@property (copy, nonatomic) NSString* applicationName;
 @property (readonly, nonatomic) BOOL inputSourceIsInputMethod;
 @property (retain, nonatomic) WineWindow* mouseCaptureWindow;
 
@@ -108,6 +109,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
     @synthesize keyboardType, lastFlagsChanged;
     @synthesize displaysTemporarilyUncapturedForDialog, temporarilyIgnoreResignEventsForDialog;
     @synthesize applicationIcon;
+    @synthesize applicationName;
     @synthesize cursorFrames, cursorTimer, cursor;
     @synthesize mouseCaptureWindow;
     @synthesize lastSetCursorPositionTime;
@@ -201,6 +203,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
         [cursor release];
         [screenFrameCGRects release];
         [applicationIcon release];
+        [applicationName release];
         [clipCursorHandler release];
         [cursorTimer release];
         [cursorFrames release];
@@ -384,6 +387,13 @@ static NSString* WineLocalizedString(unsigned int stringID)
             [self changeEditMenuKeyEquivalentsForWindow:[NSApp keyWindow]];
 
             [NSApp setApplicationIconImage:self.applicationIcon];
+
+            // Set application name
+            NSString* appName = [NSString stringWithFormat:@"WhiskyWine (%@)", self.applicationName];
+            bool success = [self setProcessName:appName];
+            if (!success)
+                ERR(@"Failed to set process name to %@", appName);
+            [appName release];
         }
     }
 
@@ -833,6 +843,109 @@ static NSString* WineLocalizedString(unsigned int stringID)
         macdrv_release_event(event);
     }
 
+    - (BOOL) setProcessName:(NSString*)name
+    {
+        // Convert the name to a CFString
+        CFStringRef cfName = (CFStringRef)name;
+
+        // Must be called on the main thread
+        if (![NSThread isMainThread]) {
+            ERR(@"setProcessName: must be called on the main thread");
+            return false;
+        }
+
+        // New name can't be NULL or empty
+        if (!cfName || CFStringGetLength(cfName) == 0) {
+            ERR(@"setProcessName: Invalid process name");
+            return false;
+        }
+
+        // Private types used in calls to launch services
+        typedef CFTypeRef PrivateLaunchRef;
+        typedef PrivateLaunchRef (*LSGetCurrentApplicationASNType)(void);
+        typedef OSStatus (*LSSetApplicationInformationItemType)(
+            int,
+            PrivateLaunchRef, 
+            CFStringRef,
+            CFStringRef,
+            CFDictionaryRef
+        );
+
+        // Static so we can reuse the same function pointers
+        static bool initialized = false;
+        static LSGetCurrentApplicationASNType getCurrentAppASNFunc = NULL;
+        static LSSetApplicationInformationItemType setAppInfoFunc = NULL;
+        static CFStringRef launchServicesDisplayNameKey = NULL;
+
+        // Initialize the function pointers
+        if (!initialized) {
+            initialized = true;
+
+            // Get the bundle for the LaunchServices framework
+            CFBundleRef launchServicesBundle = CFBundleGetBundleWithIdentifier(CFSTR("com.apple.LaunchServices"));
+            if (!launchServicesBundle) {
+                ERR(@"setProcessName: Failed to get LaunchServices bundle");
+                return false;
+            }
+
+            // Get the function pointers
+            getCurrentAppASNFunc = (LSGetCurrentApplicationASNType)(
+                CFBundleGetFunctionPointerForName(launchServicesBundle, CFSTR("_LSGetCurrentApplicationASN"))
+            );
+            if (!getCurrentAppASNFunc) {
+                ERR(@"setProcessName: Failed to get _LSGetCurrentApplicationASN in LaunchServices");
+                return false;
+            }
+            setAppInfoFunc = (LSSetApplicationInformationItemType)(
+                CFBundleGetFunctionPointerForName(launchServicesBundle, CFSTR("_LSSetApplicationInformationItem"))
+            );
+            if (!setAppInfoFunc) {
+                ERR(@"setProcessName: Failed to get _LSSetApplicationInformationItem in LaunchServices");
+                return false;
+            }
+
+            // Get the display name key
+            const CFStringRef* displayNameKey = (const CFStringRef*)(
+                CFBundleGetDataPointerForName(launchServicesBundle, CFSTR("_kLSDisplayNameKey"))
+            );
+            launchServicesDisplayNameKey = displayNameKey ? *displayNameKey : NULL;
+            if (!launchServicesDisplayNameKey) {
+                ERR(@"setProcessName: Failed to get _kLSDisplayNameKey in LaunchServices");
+                return false;
+            }
+
+            // Force symbols to be loaded in the LaunchServices framework
+            ProcessSerialNumber psn = {0, kCurrentProcess};
+            GetCurrentProcess(&psn);
+        }
+
+        // If any of the function pointers are NULL, we can't continue
+        if (!getCurrentAppASNFunc || !setAppInfoFunc || !launchServicesDisplayNameKey) {
+            ERR(@"setProcessName: Failed to get all required LaunchServices functions");
+            return false;
+        }
+
+        // Get the current application's ASN
+        PrivateLaunchRef currentAppASN = getCurrentAppASNFunc();
+
+        // Set the display name
+        OSErr err = setAppInfoFunc(
+            -2, // WebKit uses -2
+            currentAppASN,
+            launchServicesDisplayNameKey,
+            cfName,
+            NULL // Output parameter
+        );
+
+        // Log any errors
+        if (err != noErr) {
+            ERR(@"WHISKYEXTRA: Failed to set process name: %d", err);
+            return false;
+        }
+
+        return true;
+    }
+
     // We can compare two modes directly using CFEqual, but that may require that
     // they are identical to a level that we don't need.  In particular, when the
     // OS switches between the integrated and discrete GPUs, the set of display
@@ -1174,6 +1287,12 @@ static NSString* WineLocalizedString(unsigned int stringID)
         }
 
         self.applicationIcon = nsimage;
+    }
+
+    - (void) setApplicationName:(NSString*)name
+    {
+        [applicationName release];
+        applicationName = [name copy];
     }
 
     - (void) handleCommandTab
@@ -2631,6 +2750,21 @@ void macdrv_set_application_icon(CFArrayRef images, CFURLRef urlRef)
             [controller setApplicationIconFromCGImageArray:imageArray];
         else
             controller.applicationIcon = image;
+    });
+}
+
+/***********************************************************************
+ *              macdrv_set_application_name
+ *
+ * Set the application name.
+ */
+void macdrv_set_application_name(CFStringRef name)
+{
+    NSString* nsName = (NSString*)name;
+
+    OnMainThreadAsync(^{
+        WineApplicationController* controller = [WineApplicationController sharedController];
+        [controller setApplicationName:nsName];
     });
 }
 

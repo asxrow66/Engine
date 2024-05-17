@@ -128,6 +128,8 @@ enum {
 
     NSImage* applicationIcon;
 
+    NSString* applicationName;
+    
     BOOL beenActive;
 
     NSMutableSet* windowsBeingDragged;
