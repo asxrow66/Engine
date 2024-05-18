@@ -390,10 +390,10 @@ static NSString* WineLocalizedString(unsigned int stringID)
 
             /* Whisky hack #9 */
             // Set application name
-            NSString* appName = [NSString stringWithFormat:@"WhiskyWine (%@)", self.applicationName];
+            NSString* appName = [NSString stringWithFormat:kAppNameText, self.applicationName];
             bool success = [self setProcessName:appName];
             if (!success)
-                ERR(@"Failed to set process name to %@", appName);
+                NSLog(@"Failed to set process name to %@", appName);
             [appName release];
         }
     }
@@ -852,13 +852,13 @@ static NSString* WineLocalizedString(unsigned int stringID)
 
         // Must be called on the main thread
         if (![NSThread isMainThread]) {
-            ERR(@"setProcessName: must be called on the main thread");
+            NSLog(@"setProcessName: must be called on the main thread");
             return false;
         }
 
         // New name can't be NULL or empty
         if (!cfName || CFStringGetLength(cfName) == 0) {
-            ERR(@"setProcessName: Invalid process name");
+            NSLog(@"setProcessName: Invalid process name");
             return false;
         }
 
@@ -886,7 +886,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
             // Get the bundle for the LaunchServices framework
             CFBundleRef launchServicesBundle = CFBundleGetBundleWithIdentifier(CFSTR("com.apple.LaunchServices"));
             if (!launchServicesBundle) {
-                ERR(@"setProcessName: Failed to get LaunchServices bundle");
+                NSLog(@"setProcessName: Failed to get LaunchServices bundle");
                 return false;
             }
 
@@ -895,14 +895,14 @@ static NSString* WineLocalizedString(unsigned int stringID)
                 CFBundleGetFunctionPointerForName(launchServicesBundle, CFSTR("_LSGetCurrentApplicationASN"))
             );
             if (!getCurrentAppASNFunc) {
-                ERR(@"setProcessName: Failed to get _LSGetCurrentApplicationASN in LaunchServices");
+                NSLog(@"setProcessName: Failed to get _LSGetCurrentApplicationASN in LaunchServices");
                 return false;
             }
             setAppInfoFunc = (LSSetApplicationInformationItemType)(
                 CFBundleGetFunctionPointerForName(launchServicesBundle, CFSTR("_LSSetApplicationInformationItem"))
             );
             if (!setAppInfoFunc) {
-                ERR(@"setProcessName: Failed to get _LSSetApplicationInformationItem in LaunchServices");
+                NSLog(@"setProcessName: Failed to get _LSSetApplicationInformationItem in LaunchServices");
                 return false;
             }
 
@@ -912,7 +912,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
             );
             launchServicesDisplayNameKey = displayNameKey ? *displayNameKey : NULL;
             if (!launchServicesDisplayNameKey) {
-                ERR(@"setProcessName: Failed to get _kLSDisplayNameKey in LaunchServices");
+                NSLog(@"setProcessName: Failed to get _kLSDisplayNameKey in LaunchServices");
                 return false;
             }
 
@@ -923,7 +923,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
 
         // If any of the function pointers are NULL, we can't continue
         if (!getCurrentAppASNFunc || !setAppInfoFunc || !launchServicesDisplayNameKey) {
-            ERR(@"setProcessName: Failed to get all required LaunchServices functions");
+            NSLog(@"setProcessName: Failed to get all required LaunchServices functions");
             return false;
         }
 
@@ -941,7 +941,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
 
         // Log any errors
         if (err != noErr) {
-            ERR(@"WHISKYEXTRA: Failed to set process name: %d", err);
+            NSLog(@"setProcessName: Failed to set display name: %d", err);
             return false;
         }
 
