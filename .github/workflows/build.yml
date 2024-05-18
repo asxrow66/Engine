@@ -286,11 +286,6 @@ jobs:
               cp -Lr $(brew --prefix ffmpeg@6)/lib/"$i".dylib Engine/wine/lib
           done
 
-          for i in "${FFMPEG_LIBS[@]}"
-          do
-              cp -Lr $(brew --prefix ffmpeg@6)/lib/"$i".dylib Engine/wine/lib
-          done
-
           mkdir Engine/wine/lib/gstreamer-1.0
 
           for i in "${GSTREAMER_LIBS[@]}"
