@@ -192,7 +192,7 @@ jobs:
           rm -rf Engine/wine/share/man
 
           cp -a verbs.txt Engine
-          cp -a version.plist Engine
+          cp -a properties.plist Engine
 
           cp -a $(brew --prefix winetricks)/bin/winetricks Engine
           cp -a DXVK Engine
