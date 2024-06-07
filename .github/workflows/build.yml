@@ -1,9 +1,8 @@
 name: Build Wine
 
 on:
+  pull_request:
   push:
-    branches:
-      - '7.7'
   workflow_dispatch:
 
 env: 
@@ -11,13 +10,14 @@ env:
   CXX: clang++
   CPATH: /usr/local/include
   LIBRARY_PATH: /usr/local/lib
-  CFLAGS: -O3 -Wno-deprecated-declarations -Wno-incompatible-pointer-types
-  CROSSCFLAGS: -O3
+  CFLAGS: -O3 -Wno-deprecated-declarations -Wno-format -Wno-incompatible-pointer-types -Wno-implicit-function-declaration -Wno-int-conversion
+  CROSSCFLAGS: -O3 -Wno-deprecated-declarations -Wno-format -Wno-incompatible-pointer-types -Wno-implicit-function-declaration -Wno-int-conversion
   LDFLAGS: -Wl,-ld_classic -Wl,-headerpad_max_install_names -Wl,-rpath,@loader_path/../../ -Wl,-rpath,/usr/local/lib
   MACOSX_DEPLOYMENT_TARGET: 10.14
   WINE_CONFIGURE: $GITHUB_WORKSPACE/configure
   BUILDROOT: $GITHUB_WORKSPACE/build
   WINE_INSTALLROOT: install
+  WINE_MONO: https://github.com/madewokherd/wine-mono/releases/download/wine-mono-7.4.1/wine-mono-7.4.1-x86.tar.xz
 
 jobs:
   build:
@@ -29,6 +29,7 @@ jobs:
         run: sudo xcode-select -switch /Applications/Xcode_15.2.app/Contents/Developer
 
       - name: Install Homebrew Packages
+        continue-on-error: true
         run: |
           REQUIRED_PACKAGES=(
               # Build Dependencies
@@ -176,13 +177,6 @@ jobs:
           pushd ${{ env.BUILDROOT }}/wine32on64
           make install-lib DESTDIR="$GITHUB_WORKSPACE/${{ env.WINE_INSTALLROOT }}"
           popd
-  
-      - name: Install DXVK
-        run: |
-          DXVK_URL=$(curl -s https://api.github.com/repos/Gcenx/DXVK-MacOS/releases/latest | jq -r '.assets[] | select(.browser_download_url | contains("dxvk-macOS")) | .browser_download_url')
-          curl -L -o dxvk.tar.gz $DXVK_URL
-          tar -xzf dxvk.tar.gz --strip-components=1
-          rm dxvk.tar.gz
 
       - name: Grab Verbs From Winetricks
         run: |
@@ -199,9 +193,7 @@ jobs:
 
           cp -a $(brew --prefix winetricks)/bin/winetricks Libraries
           cp -a verbs.txt Libraries
-
-          cp -a x32 Libraries/DXVK
-          cp -a x64 Libraries/DXVK
+          cp -a DXVK Libraries
 
       - name: Copy External Libs
         run: |
@@ -243,7 +235,7 @@ jobs:
               "libp11-kit.0"
               "libpcre2-8.0"
               "libpng16.16"
-              "libSDL2"
+              "libSDL2-2.0.0"
               "libtasn1.6"
               "libunistring.5"
               "libXau.6"
@@ -251,6 +243,13 @@ jobs:
               "libX11.6"
               "libX11-xcb.1"
               "libxcb.1"
+          )
+
+          FFMPEG_LIBS=(
+            "libavfilter.9"
+            "libavformat.60"
+            "libavcodec.60"
+            "libavutil.58"
           )
 
           GSTREAMER_LIBS=(
@@ -265,6 +264,7 @@ jobs:
               "libgstdeinterlace"
               "libgstid3demux"
               "libgstisomp4"
+              "libgstlibav"
               "libgstopengl"
               "libgstplayback"
               "libgsttypefindfunctions"
@@ -277,6 +277,11 @@ jobs:
           for i in "${LIBS[@]}"
           do
               cp -Lr $(brew --prefix)/lib/"$i".dylib Libraries/Wine/lib
+          done
+
+          for i in "${FFMPEG_LIBS[@]}"
+          do
+              cp -Lr $(brew --prefix ffmpeg@6)/lib/"$i".dylib Libraries/Wine/lib
           done
 
           mkdir Libraries/Wine/lib/gstreamer-1.0
@@ -326,6 +331,17 @@ jobs:
         run: |
           cp -a WhiskyWineVersion.plist Libraries/
 
+      - name: Install WineMono
+        run: |
+          mkdir Libraries/Wine/share/wine/mono
+
+          curl -L -o mono.tar.xz ${{ env.WINE_MONO }}
+          tar -xzf mono.tar.xz -C Libraries/Wine/share/wine/mono
+
+      - name: Build Checksum
+        run: |
+          find ./Libraries -type f -exec shasum "{}" + > SUMS.sha
+
       - name: Upload config64.log
         if: failure()
         uses: actions/upload-artifact@v4
@@ -352,7 +368,15 @@ jobs:
           name: Libraries
           path: Libraries.tar.gz
 
+      - name: Upload SUMS
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SUMS
+          path: SUMS.sha
+
       - name: Upload Libraries to WhiskyBucket
+        if: ${{ github.ref == 'refs/heads/7.7' }}
         env:
           RCLONE_CONFIG_R2_TYPE: s3
           RCLONE_CONFIG_R2_PROVIDER: Cloudflare
@@ -364,3 +388,4 @@ jobs:
           brew install rclone
           rclone copy Libraries.tar.gz r2:whisky-bucket/Wine
           rclone copy WhiskyWineVersion.plist r2:whisky-bucket/Wine
+          rclone copy SUMS.sha r2:whisky-bucket/Wine
