@@ -214,6 +214,7 @@ jobs:
       - name: Copy External Libs
         run: |
           LIBS=(
+              "libbluray.2"
               "libfreetype"
               "libfreetype.6"
               "libgio-2.0.0"
@@ -254,6 +255,7 @@ jobs:
               "libSDL2-2.0.0"
               "libtasn1.6"
               "libunistring.5"
+              "libvpx.8"
               "libXau.6"
               "libXdmcp.6"
               "libX11.6"
@@ -266,6 +268,7 @@ jobs:
             "libavformat.60"
             "libavcodec.60"
             "libavutil.58"
+            "libpostproc.57"
             "libswresample.4"
             "libswscale.7"
           )
