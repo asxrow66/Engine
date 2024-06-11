@@ -252,8 +252,6 @@ jobs:
               "libpcre2-8.0"
               "libpng16.16"
               "libSDL2-2.0.0"
-              "libswresample.4"
-              "libswscale.7"
               "libtasn1.6"
               "libunistring.5"
               "libXau.6"
@@ -268,6 +266,8 @@ jobs:
             "libavformat.60"
             "libavcodec.60"
             "libavutil.58"
+            "libswresample.4"
+            "libswscale.7"
           )
 
           GSTREAMER_LIBS=(
