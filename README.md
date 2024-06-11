@@ -1,25 +1,26 @@
 <h1 align="center">
   <br>
   <a href="https://getmythic.app">
-    <img src="https://github.com/MythicApp/Engine/assets/41133734/becc2312-c090-4974-9e26-3c6ca15a9858" 
+    <img src="https://github.com/MythicApp/Engine/assets/41133734/b602e46b-f5bd-4175-bd6c-196e6228584f" 
       style="width: 20%; height: 20%;">
   </a>
 
-  
   Mythic Engine
   <br>
   <sub><sub><sub>Part of <a href="https://getmythic.app">Mythic.</a></sub></sub></sub>
 
-  ![GitHub License](https://img.shields.io/github/license/MythicApp/Engine) 
+  ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/MythicApp/Engine/.github%2Fworkflows%2Fbuild.yml)
   [![Discord](https://img.shields.io/discord/1154998702650425397?color=5865F2)](https://discord.com/invite/58NZ7fFqPy)
 </h1>
 
-Mythic Engine is Mythic's implementation of Apple's game porting toolkit (GPTK), which uses [wine](https://www.winehq.org/) and Apple D3DMetal, to create a windows gaming experience on macOS through API translation. Similar to Proton, Mythic Engine attempts to be an experience that enables native Windows games to be playable on macOS, while coming closer to native performance than ever before. (performance will vary between games)
+Mythic Engine is Mythic's implementation of Apple's [Game Porting Toolkit (GPTK)](https://developer.apple.com/games/game-porting-toolkit/), which uses [wine](https://www.winehq.org/) translation technology and the Apple-designed Direct3D-to-Metal translator, D3DMetal, to create an effective windows gaming experience on macOS. Similar to Proton, Mythic Engine is a backend that enables native Windows games to be playable on macOS, while coming closer to native performance than ever before.
 
 <sub>
 A derivative of <a href="https://github.com/Whisky-App/wine">WhiskyWine</a>, credit to those who contribute to and presently work on it.
 <br>
-Mythic Engine is currently a direct, unmodified fork of WhiskyWine. Stay tuned, more will be added sometime!
+Please note that performance will vary between games.
+<br>
+Also note that GPTKv2 is currently still in its beta phase; bugs and hiccups are to be expected.
 </sub>
 
 ---
