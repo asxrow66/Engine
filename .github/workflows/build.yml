@@ -53,6 +53,17 @@ jobs:
 
           brew install "${REQUIRED_PACKAGES[@]}"
 
+      - name: Echo Libs [DEBUG]
+        run: |
+          echo "Brew Libs\n========="
+          ls $(brew --prefix)/lib
+
+          echo "FFmpeg Libs\n===========" 
+          ls $(brew --prefix ffmpeg@6)/lib
+
+          echo "GStreamer Libs\n=============="
+          ls $(brew --prefix gstreamer)/lib/gstreamer-1.0
+
       - name: Add bison & cx-llvm to $PATH
         run: |
           echo "$(brew --prefix bison)/bin" >> $GITHUB_PATH
@@ -236,6 +247,8 @@ jobs:
               "libpcre2-8.0"
               "libpng16.16"
               "libSDL2-2.0.0"
+              "libswresample.4"
+              "libswscale.7"
               "libtasn1.6"
               "libunistring.5"
               "libXau.6"
