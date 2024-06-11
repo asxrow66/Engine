@@ -35,7 +35,6 @@ jobs:
               # Build Dependencies
               "bison"
               "pkg-config"
-              "mingw-w64"
               "gcenx/wine/cx-llvm"
 
               # Utilities (DXVK)
@@ -52,6 +51,23 @@ jobs:
           )
 
           brew install "${REQUIRED_PACKAGES[@]}"
+
+          # As of mingw-w64 12, brew uses UCRT instead of MSVCRT
+          # Wine will fail to build with UCRT, so we must rollback.
+
+          curl -L https://raw.githubusercontent.com/Homebrew/homebrew-core/31209a399a7b40bf2cd3abd7aee2715547ccd5bd/Formula/m/mingw-w64.rb > mingw-w64.rb && brew install mingw-w64.rb
+          rm mingw-w64.rb
+
+      - name: Echo Libs [DEBUG]
+        run: |
+          echo "Brew Libs\n========="
+          ls $(brew --prefix)/lib
+
+          echo "FFmpeg Libs\n===========" 
+          ls $(brew --prefix ffmpeg@6)/lib
+
+          echo "GStreamer Libs\n=============="
+          ls $(brew --prefix gstreamer)/lib/gstreamer-1.0
 
       - name: Add bison & cx-llvm to $PATH
         run: |
@@ -200,6 +216,7 @@ jobs:
       - name: Copy External Libraries
         run: |
           LIBS=(
+              "libbluray.2"
               "libfreetype"
               "libfreetype.6"
               "libgio-2.0.0"
@@ -240,6 +257,7 @@ jobs:
               "libSDL2-2.0.0"
               "libtasn1.6"
               "libunistring.5"
+              "libvpx.8"
               "libXau.6"
               "libXdmcp.6"
               "libX11.6"
@@ -252,6 +270,9 @@ jobs:
             "libavformat.60"
             "libavcodec.60"
             "libavutil.58"
+            "libpostproc.57"
+            "libswresample.4"
+            "libswscale.7"
           )
 
           GSTREAMER_LIBS=(
