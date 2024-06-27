@@ -132,6 +132,8 @@ enum {
 
     NSImage* applicationIcon;
 
+    NSString* applicationName; /* Whisky hack #9 */
+    
     BOOL beenActive;
 
     NSMutableSet* windowsBeingDragged;
