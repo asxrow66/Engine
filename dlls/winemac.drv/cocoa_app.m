@@ -384,6 +384,14 @@ static NSString* WineLocalizedString(unsigned int stringID)
             [self changeEditMenuKeyEquivalentsForWindow:[NSApp keyWindow]];
 
             [NSApp setApplicationIconImage:self.applicationIcon];
+
+            /* Whisky hack #9 */
+            // Set application name
+            NSString* appName = [NSString stringWithFormat:kAppNameText, self.applicationName];
+            bool success = [self setProcessName:appName];
+            if (!success)
+                NSLog(@"Failed to set process name to %@", appName);
+            [appName release];
         }
     }
 
