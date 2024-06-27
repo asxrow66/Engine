@@ -66,6 +66,10 @@ enum {
     WineApplicationEventWakeQuery,
 };
 
+/* Whisky hack #9 */
+#define kAppNameText @"%@ (Whi" \
+                     @"sky)"
+
 
 @class WineEventQueue;
 @class WineWindow;
